@@ -11,7 +11,7 @@ loops_var=1  # the suffix of _var is appended for variables
 warning=""
 missing=""
 
-commands_required="fmt column"
+commands_required="fmt"
 commands_gnu=""  # GNU commands required
 
 PROGNAME=${0##*/}
@@ -101,7 +101,7 @@ if [ -n "$help_enabled" ]; then
   if [ -n "$DESCRIPTION" ]; then
     format_text_block_f() {
       fmt_f() {
-        LINE_WIDTH=80  # the traditional column width
+        LINE_WIDTH=80  # the traditional  width
         w="-w$((LINE_WIDTH - 1))"  # option for fmt
         fmt "$w" </dev/null >/dev/null 2>&1 || w=""  # dry run for the option
         fmt "$w"
