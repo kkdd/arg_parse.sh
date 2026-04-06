@@ -40,7 +40,7 @@ argv_with_shift_f() {  # Obtains optional argument value from the connected/unco
   identifiers="$(printf '%s' "$1" | sed 's/\([^-]\)-/\1 -/g')"  # split
   argv_="$2"
   for i in $identifiers "="; do argv_=${argv_#"$i"}; done  # extract the value
-  if [ -z "$argv_" ]; then  # value may resides at the next positon
+  if [ -z "$argv_" ]; then  # the value may reside at the next positon
     argv_="$3"; n_shift_incr=1
     case "$argv_" in -*|"") n_shift_incr=$N_SHIFT_INCR_FAILED;; esac  # failed
   fi
