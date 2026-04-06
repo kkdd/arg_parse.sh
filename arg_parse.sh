@@ -32,8 +32,7 @@ WARNING_HEAD="Warning: Type \"$PROGNAME --help\" for usage instructions."
 
 # functions
 append_warning_f() {
-  LF=$(printf '\n_');LF=${LF%_}
-  warning="${warning}${warning:+$LF}$1"
+  [ -z "$warning" ] && warning="$1" || warning="$warning$(printf '\n%s' "$1")"
 }
 
 argv_with_shift_f() {  # Obtains optional argument value from the connected/unconnected forms such as -n1, --loops1, -n=1, --loops=1, -n 1, and --loops 1.
