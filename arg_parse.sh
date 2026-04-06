@@ -38,9 +38,9 @@ append_warning_f() {
 
 argv_with_shift_f() {  # Obtains optional argument value from the connected/unconnected forms such as -n1, --loops1, -n=1, --loops=1, -n 1, and --loops 1.
   n_shift_incr=0  # default value when returning as exit status
-  identifiers="$(printf '%s' "$1" | sed 's/\([a-zA-Z]\)-/\1 -/g') ="
+  identifiers="$(printf '%s' "$1" | sed 's/\([^-]\)-/\1 -/g')"  # split
   argv_="$2"
-  for i in $identifiers; do argv_=${argv_#"$i"}; done  # remove identifiers
+  for i in $identifiers "="; do argv_=${argv_#"$i"}; done  # extract the value
   if [ -z "$argv_" ]; then  # value may resides at the next positon
     argv_="$3"; n_shift_incr=1
     case "$argv_" in -*|"") n_shift_incr=$N_SHIFT_INCR_FAILED;; esac  # failed
