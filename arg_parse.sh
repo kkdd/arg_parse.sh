@@ -3,7 +3,9 @@
 # constants
 TRUE="true"
 NINDENT=2
-N_SHIFT_INCR_FAILED=2  # in the case of invalid or missing value in parsing
+VALUE_IN_SAME=0
+VALUE_IN_NEXT=1
+EXTRACT_FAILED=2  # for the case of invalid or missing value in parsing
 
 # default values (long option names are used as the corresponding variable names)
 loops_var=1  # the suffix of _var is appended for variables
@@ -35,17 +37,32 @@ append_warning_f() {
   [ -z "$warning" ] && warning="$1" || warning="$warning$(printf '\n%s' "$1")"
 }
 
-argv_with_shift_f() {  # Obtains optional argument value from the connected/unconnected forms such as -n1, --loops1, -n=1, --loops=1, -n 1, and --loops 1.
-  n_shift_incr=0  # default value when returning as exit status
-  identifiers="$(printf '%s' "$1" | sed 's/\([^-]\)-/\1 -/g')"  # split
-  argv_="$2"
-  for i in $identifiers "="; do argv_=${argv_#"$i"}; done  # extract the value
-  if [ -z "$argv_" ]; then  # the value may reside at the next positon
-    argv_="$3"; n_shift_incr=1
-    case "$argv_" in -*|"") n_shift_incr=$N_SHIFT_INCR_FAILED;; esac  # failed
+# Extract optional argument value from the connected forms such as -n1, --num1, -n=1, or --num=1 using option prefix tokens -n--num asigned by $1.
+extract_opt_value_in_same_f() {
+  opt_value="$2"  # initial value (from current argument)
+  prefix_tokens="$(printf '%s' "$1" | sed 's/\([^ -]\)-/\1 -/g')"  # split tokens by inserting a space before '-'.
+  prefix_tokens="$prefix_tokens ="  # append "=" as a delimiter for stripping
+  for p in $prefix_tokens; do
+    opt_value=${opt_value#"$p"}  # extract the value by stripping prefix tokens
+  done
+  printf '%s' "$opt_value"
+}
+
+# Extract optional argument value futhermore from the unconnected forms such as -n 1, --num 1, -n= 1, or --num= 1 also using option prefix tokens -n--num asigned by $1.
+extract_opt_value_f() {
+  opt_value="$(extract_opt_value_in_same_f "$1" "$2")"  # default at start
+  value_from=$VALUE_IN_SAME
+  if [ -z "$opt_value" ]; then
+    opt_value="$3"  # the value may reside at the next place
+    value_from=$VALUE_IN_NEXT
+    case "$opt_value" in
+      -* | "" )  # failed
+        opt_value=""
+        value_from=$EXTRACT_FAILED;;
+    esac
   fi
-  printf '%s' "$argv_"
-  return $n_shift_incr  # 1 will be added as the shift number.
+  printf '%s' "$opt_value"
+  return $value_from  # caller will use it as an additional shift unless failed
 }
 
 # parsing optional arguments
@@ -53,22 +70,24 @@ while [ $# -gt 0 ]; do
   case "$1" in
     -h|--help)      help_enabled=$TRUE;;
     -d|--debug)     debug_enabled=$TRUE;;
-    -l*|--loops*)   loops_var=$(argv_with_shift_f -n--loops "$@");;
-    -m*|--mammal*)  mammal_var=$(argv_with_shift_f -m--mammal "$@");;
+    -l*|--loops*)   loops_var=$(extract_opt_value_f -l--loops "$@");;
+    -m*|--mammal*)  mammal_var=$(extract_opt_value_f -m--mammal "$@");;
     -S)             s_enabled=$TRUE;;
-    -T*)            t_var=$(argv_with_shift_f -t "$@");;
-    -[!-][!-]*)     rest_flags=${1#??}; first_flag=${1%"$rest_flags"}; shift;
+    -T*)            t_var=$(extract_opt_value_f -t "$@");;
+    -[!-][!-]*)     # split combined short options: -abc → -a -bc
+                    rest_flags=${1#??}; first_flag=${1%"$rest_flags"}; shift;
                     set -- "$first_flag" "-$rest_flags" "$@"; continue;;
     --)             shift; break;;
     -*)             append_warning_f "Unknown option: '$1'";;
     *)              break;;
   esac
-  if n_shift_incr=$?; [ $n_shift_incr -lt $N_SHIFT_INCR_FAILED ]; then
-    shift $((n_shift_incr+1))  ## = 1 or 2 (connected or disconnected)
+  shift_additional=$?
+  if [ $shift_additional -lt $EXTRACT_FAILED ]; then
+    shift $shift_additional  # 0: default, 1: extract_opt_value_f has successfully taken value from next arg
   else
     append_warning_f "Option '${1%=}' requires an argument"
-    shift; break;
   fi
+  shift
 done
 
 # confirmations
