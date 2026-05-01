@@ -27,7 +27,7 @@ Works with `sh`, `dash`, `bash` without external dependencies.
 ## Example
 
 ```sh
-./arg_parse.sh -v -m dog --loops=0  1 2 3
+./arg_parse.sh -d -m dog --loops=0  1 2 3
 ```
 
 ---
