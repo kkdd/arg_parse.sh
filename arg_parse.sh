@@ -74,7 +74,7 @@ extract_opt_value_f() {  # Extract optional argument value futhermore from the u
 # parse optional arguments
  # shellcheck disable=SC2034  # variables unused
 while [ $# -gt 0 ]; do
-  opt_token=$1
+  opt_token="$1"
   case "$opt_token" in
     -h|--help)      help_enabled=$TRUE;;
     -d|--debug)     debug_enabled=$TRUE;;
