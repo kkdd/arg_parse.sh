@@ -14,6 +14,7 @@ Works with `sh`, `dash`, `bash` without external dependencies.
 - Options with values (`-m dog`, `--mammal=dog`)
 - Simple `while + case` structure
 - No external commands
+- Check errors in parsing; warn and stop if detected
 
 ---
 
