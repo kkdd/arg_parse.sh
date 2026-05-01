@@ -27,7 +27,7 @@ Works with `sh`, `dash`, `bash` without external dependencies.
 ## Example
 
 ```sh
-./script.sh -v -m dog -a a,b,c 1 2 3
+./arg_parse.sh -v -m dog --loops=0  1 2 3
 ```
 
 ---
@@ -35,8 +35,8 @@ Works with `sh`, `dash`, `bash` without external dependencies.
 ## Supported Forms
 
 ```sh
--v
---verbose
+-h
+--help
 
 -m dog
 -mdog
@@ -55,6 +55,36 @@ Focused on:
 - Portability
 
 A lightweight alternative to `getopts` / `getopt`.
+
+---
+
+## Example of Warning
+
+```console
+$ ./arg_parse.sh --loops -xy
+Warning: Type "arg_parse.sh --help" for usage instructions.
+- Option '--loops' requires an argument
+- Unknown option: '-x'
+- Unknown option: '-y'
+```
+
+---
+
+## Example of Usage
+
+```console
+$ ./arg_parse.sh --help
+
+    Name: arg_parse.sh - parse arguments
+
+    Usage: arg_parse.sh [options] [positinal_argument [...]]
+
+    Options:
+      -h|--help          Show this usage and exit.
+      -d|--debug         Enable debug mode.
+      -l|--loops N       Set the number of loops (default: 1)
+      -m|--mammal NAME   Set mammal name.
+```
 
 ---
 
