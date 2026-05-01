@@ -9,7 +9,7 @@ Works with `sh`, `dash`, `bash` without external dependencies.
 ## Features
 
 - POSIX compatible
-- Short and long options (`-v`, `--verbose`)
+- Short and long options (`-d`, `--debug`)
 - Combined short flags (`-abc`)
 - Options with values (`-m dog`, `--mammal=dog`)
 - Simple `while + case` structure
