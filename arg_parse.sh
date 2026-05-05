@@ -13,6 +13,8 @@ loops_var=1  # the suffix of _var is appended for variables
 # debug_enabled=$TRUE  # the suffix of _enabled is appended for Boolean
 warning=""
 missing=""
+first_flag=""  # will be set by split_combined_option_global_f
+rest_flags=""  # ditto
 
 # command requirements
 commands_required="fmt"
@@ -26,7 +28,8 @@ OPTIONS="Options:
   -h|--help          Show this usage and exit.
   -d|--debug         Enable debug mode.
   -l|--loops N       Set the number of loops (default: $loops_var).
-  -m|--mammal NAME   Set mammal name."
+  -m|--mammal NAME   Set mammal name.
+"
 DESCRIPTION="Description:
 Parse command-line arguments."
 EXAMPLES="Examples:
@@ -38,9 +41,15 @@ append_warning_f() {
   [ -z "$warning" ] && warning="$1" || warning="$warning$(printf '\n%s' "$1")"
 }
 
-valid_arg_value_f() {
-  case $1 in -*) return 1 ;; esac  # doesn't look like arg value
+confirm_arg_value_f() {
+  case $1 in -*) return 1 ;; esac  # doesn't look like argument value
   return 0
+}
+
+split_combined_option_global_f() {  # -abc → -a -bc # set them as global variable
+  rest=${1#??}  # → bc
+  first_flag="${1%"$rest"}"  # → -a
+  rest_flags="-$rest"        # → -bc
 }
 
 extract_opt_value_in_same_f() {  # Extract optional argument value from the connected forms such as -n1, --num1, -n=1, or --num=1 using option prefix -n--num asigned by $1.
@@ -62,8 +71,8 @@ extract_opt_value_f() {  # Extract optional argument value futhermore from the u
   if [ -n "$opt_value" ]; then  # first, try same-token form
     printf '%s' "$opt_value"
     return $VALUE_IN_SAME
-  elif [ $# -ge 3 ] && valid_arg_value_f "$next_token"; then  # next, try next-token
-    printf '%s' "$3"
+  elif [ $# -ge 3 ] && confirm_arg_value_f "$next_token"; then  # next, try next-token
+    printf '%s' "$next_token"
     return $VALUE_IN_NEXT
   else  # failed
     printf '%s' "$UNDEFINED_VALUE"
@@ -80,17 +89,15 @@ while [ $# -gt 0 ]; do
     -d|--debug)     debug_enabled=$TRUE;;
     -l*|--loops*)   loops_var=$(extract_opt_value_f -l--loops "$@");;
     -m*|--mammal*)  mammal_var=$(extract_opt_value_f -m--mammal "$@");;
-    -[!-][!-]*)     # split combined short options: -abc → -a -bc
-                    rest_flags=${opt_token#??};
-                    first_flag=${opt_token%"$rest_flags"}; shift;
-                    set -- "$first_flag" "-$rest_flags" "$@"; continue;;
+    -[!-][!-]*)     split_combined_option_global_f "$opt_token"; shift
+                    set -- "$first_flag" "$rest_flags" "$@"; continue;;
     --)             shift; break;;
     -*)             append_warning_f "Unknown option: '$opt_token'";;
     *)              break;;
   esac
   shift_additional=$?
   if [ $shift_additional -lt $EXTRACT_FAILED ]; then
-    shift $shift_additional  # 0: default, 1: extract_opt_value_f successfully extracts the next arg
+    shift $shift_additional  # 0: default, 1: next arg by extract_opt_value_f
   else
     append_warning_f "Option '${opt_token%=}' requires an argument"
   fi
@@ -98,10 +105,6 @@ while [ $# -gt 0 ]; do
 done
 
 # confirmations
-for e in "$@"; do
-  valid_arg_value_f "$e" || append_warning_f "Argument value should not begin with \"-\": '$e'"
-done
-
 case "$(uname -s)" in
   Linux)
     for c in $commands_gnu; do
@@ -144,7 +147,7 @@ if [ -n "$help_enabled" ]; then
       sed "s/|/$BAR/g" |
       sed "s/\( \)\([A-Z][A-Z]*\)\([^ A-Z]*\)\(  \)/\1${UNDERLINE}\2${NORMALFACE}\3\4/"  # underline uppercase variable names
     }
-    printf '\n%s\n' "$OPTIONS" | decorate_f
+    printf '\n%s' "$OPTIONS" | decorate_f
   fi
   [ -n "$EXAMPLES" ] && printf '\n%s\n' "$EXAMPLES"
   if [ -n "$commands_required" ]; then
